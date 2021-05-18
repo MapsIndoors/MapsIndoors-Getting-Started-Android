@@ -63,11 +63,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         MapsIndoors.initialize(getApplicationContext(), "79f8e7daff76489dace4f9f9");
         MapsIndoors.setGoogleAPIKey(getString(R.string.google_maps_key));
 
-        ImageButton mSearchBtn = findViewById(R.id.search_btn);
+        ImageButton searchBtn = findViewById(R.id.search_btn);
         mSearchTxtField = findViewById(R.id.search_edit_txt);
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
         //ClickListener to start a search, when the user clicks the search button
-        mSearchBtn.setOnClickListener(view -> {
+        searchBtn.setOnClickListener(view -> {
             if (mSearchTxtField.getText().length() != 0) {
                 //There is text inside the search field. So lets do the search.
                 search(mSearchTxtField.getText().toString());
