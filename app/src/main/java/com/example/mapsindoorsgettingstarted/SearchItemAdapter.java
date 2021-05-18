@@ -31,21 +31,27 @@ class SearchItemAdapter extends RecyclerView.Adapter<ViewHolder> {
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
+        //Setting the the text on the text view to the name of the location
         holder.text.setText(mLocations.get(position).getName());
 
         holder.itemView.setOnClickListener(view -> {
             mMapActivity.createRoute(mLocations.get(position));
+            mMapActivity.getMapControl().clearMap();
         });
 
         if (mMapActivity != null) {
+            //We start by checking if there is a specific Location icon assigned to the location
             LocationDisplayRule locationDisplayRule = mMapActivity.getMapControl().getDisplayRule(mLocations.get(position));
+
             if (locationDisplayRule != null && locationDisplayRule.getIcon() != null) {
+                //There is a specific icon on this location so we use that
                 mMapActivity.runOnUiThread(()-> {
                     holder.imageView.setImageBitmap(locationDisplayRule.getIcon());
                 });
             }else {
-                //Location does not have a special displayRule using type Display rule
+                //Location does not have a specific displayRule, we instead use type Display rule
                 LocationDisplayRule typeDisplayRule = mMapActivity.getMapControl().getDisplayRule(mLocations.get(position).getType());
+
                 if (typeDisplayRule != null) {
                     mMapActivity.runOnUiThread(()-> {
                         holder.imageView.setImageBitmap(typeDisplayRule.getIcon());
@@ -68,7 +74,7 @@ class ViewHolder extends RecyclerView.ViewHolder {
     final ImageView imageView;
 
     ViewHolder(LayoutInflater inflater, ViewGroup parent) {
-        super(inflater.inflate(R.layout.fragment_search__list_item, parent, false));
+        super(inflater.inflate(R.layout.fragment_search_list_item, parent, false));
         text = itemView.findViewById(R.id.text);
         imageView = itemView.findViewById(R.id.location_image);
     }

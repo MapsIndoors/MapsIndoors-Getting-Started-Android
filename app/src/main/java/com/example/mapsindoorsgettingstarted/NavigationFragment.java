@@ -76,9 +76,8 @@ public class NavigationFragment extends Fragment {
 
         //Button for closing the bottom sheet. Clears the route through directionsRenderer as well, and changes map padding.
         closeBtn.setOnClickListener(v -> {
-            mMapsActivity.getSupportFragmentManager().beginTransaction().remove(this).commit();
+            mMapsActivity.removeFragmentFromBottomSheet(this);
             mMapsActivity.getMpDirectionsRenderer().clear();
-            mMapsActivity.getMapControl().setMapPadding(0,0,0,0);
         });
 
         //Next button for going through the legs of the route.
@@ -97,7 +96,7 @@ public class NavigationFragment extends Fragment {
         infoTxtView.setText("Time for route: " + TimeUnit.MINUTES.convert(mRoute.getDuration(), TimeUnit.SECONDS) + " minutes");
     }
 
-    public class RouteCollectionAdapter extends FragmentStateAdapter {
+    class RouteCollectionAdapter extends FragmentStateAdapter {
 
         public RouteCollectionAdapter(Fragment fragment) {
             super(fragment);
