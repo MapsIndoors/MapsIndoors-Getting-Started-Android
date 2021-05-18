@@ -36,6 +36,7 @@ class SearchItemAdapter extends RecyclerView.Adapter<ViewHolder> {
 
         holder.itemView.setOnClickListener(view -> {
             mMapActivity.createRoute(mLocations.get(position));
+            //Clearing map to remove the location filter from our search result
             mMapActivity.getMapControl().clearMap();
         });
 
