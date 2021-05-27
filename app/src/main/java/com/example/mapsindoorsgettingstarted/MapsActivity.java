@@ -2,6 +2,7 @@ package com.example.mapsindoorsgettingstarted;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 
@@ -35,7 +36,7 @@ import com.mapsindoors.mapssdk.Venue;
 import com.mapsindoors.mapssdk.errors.MIError;
 
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, OnRouteResultListener {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, OnRouteResultListener {
 
     private GoogleMap mMap;
     private MapControl mMapControl;
