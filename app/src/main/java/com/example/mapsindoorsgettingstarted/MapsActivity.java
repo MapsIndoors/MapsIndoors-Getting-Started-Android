@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -47,8 +46,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Point mUserLocation = new Point(38.897389429704695, -77.03740973527613,0);
     private NavigationFragment mNavigationFragment;
     private SearchFragment mSearchFragment;
-    private Fragment currentFragment;
-    private BottomSheetBehavior<FrameLayout> btmnSheetBehavior;
+    private Fragment mCurrentFragment;
+    private BottomSheetBehavior<FrameLayout> mBtmnSheetBehavior;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,20 +90,20 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         });
 
         FrameLayout bottomSheet = findViewById(R.id.standardBottomSheet);
-        btmnSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-        btmnSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
+        mBtmnSheetBehavior = BottomSheetBehavior.from(bottomSheet);
+        mBtmnSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
             @Override
             public void onStateChanged(@NonNull View bottomSheet, int newState) {
                 if (newState == BottomSheetBehavior.STATE_HIDDEN) {
-                    if (currentFragment != null) {
-                        if (currentFragment instanceof NavigationFragment) {
+                    if (mCurrentFragment != null) {
+                        if (mCurrentFragment instanceof NavigationFragment) {
                             //Clears the direction view if the navigation fragment is closed.
                             mpDirectionsRenderer.clear();
                         }
                         //Clears the map if any searches has been done.
                         mMapControl.clearMap();
                         //Removes the current fragment from the BottomSheet.
-                        removeFragmentFromBottomSheet(currentFragment);
+                        removeFragmentFromBottomSheet(mCurrentFragment);
                     }
                 }
             }
@@ -265,23 +264,23 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     void addFragmentToBottomSheet(Fragment newFragment) {
-        if (currentFragment != null) {
-            getSupportFragmentManager().beginTransaction().remove(currentFragment).commit();
+        if (mCurrentFragment != null) {
+            getSupportFragmentManager().beginTransaction().remove(mCurrentFragment).commit();
         }
         getSupportFragmentManager().beginTransaction().replace(R.id.standardBottomSheet, newFragment).commit();
-        currentFragment = newFragment;
+        mCurrentFragment = newFragment;
         //Set the map padding to the height of the bottom sheets peek height. To not obfuscate the google logo.
         runOnUiThread(()-> {
-            mMapControl.setMapPadding(0, 0,0,btmnSheetBehavior.getPeekHeight());
-            if (btmnSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
-                btmnSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
+            mMapControl.setMapPadding(0, 0,0, mBtmnSheetBehavior.getPeekHeight());
+            if (mBtmnSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
+                mBtmnSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
         });
     }
 
     void removeFragmentFromBottomSheet(Fragment fragment) {
-        if (currentFragment.equals(fragment)) {
-            currentFragment = null;
+        if (mCurrentFragment.equals(fragment)) {
+            mCurrentFragment = null;
         }
         getSupportFragmentManager().beginTransaction().remove(fragment).commit();
         runOnUiThread(()-> {
