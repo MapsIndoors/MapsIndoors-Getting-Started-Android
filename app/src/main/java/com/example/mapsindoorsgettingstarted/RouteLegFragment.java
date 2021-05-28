@@ -11,7 +11,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.mapsindoors.mapssdk.Route;
 import com.mapsindoors.mapssdk.RouteLeg;
 import com.mapsindoors.mapssdk.RouteStep;
 
@@ -45,13 +44,13 @@ public class RouteLegFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         //Assigning views
-        TextView fromTxtView = view.findViewById(R.id.from_text_view);
+        TextView stepTxtView = view.findViewById(R.id.steps_text_view);
         String stepsString = "";
         //A loop to write what to do for each step of the leg.
         for (int i = 0; i < mRouteLeg.getSteps().size(); i++) {
             RouteStep routeStep = mRouteLeg.getSteps().get(i);
-            stepsString += "Step " + (i + 1) + routeStep.getManeuver() + "\n";
+            stepsString += "Step " + (i + 1) + " " + routeStep.getManeuver() + "\n";
         }
-        fromTxtView.setText(stepsString);
+        stepTxtView.setText(stepsString);
     }
 }

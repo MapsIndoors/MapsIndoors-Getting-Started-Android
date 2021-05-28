@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipToPadding="false"
-    android:paddingTop="@dimen/list_item_spacing_half"
-    android:paddingBottom="@dimen/list_item_spacing_half"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     tools:context=".SearchFragment"
-    tools:listitem="@layout/fragment_search__list_item" />
+    tools:listitem="@layout/fragment_search_list_item" />
