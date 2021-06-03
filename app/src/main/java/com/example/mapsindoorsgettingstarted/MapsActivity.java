@@ -7,6 +7,7 @@ import androidx.fragment.app.Fragment;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
@@ -14,12 +15,14 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
+import com.example.mapsindoorsgettingstarted.PositionProviders.PointrPositionProvider;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.textfield.TextInputEditText;
+import com.mapsindoors.mapssdk.LocationDisplayRule;
 import com.mapsindoors.mapssdk.MPDirectionsRenderer;
 import com.mapsindoors.mapssdk.MPFilter;
 import com.mapsindoors.mapssdk.MPLocation;
@@ -27,12 +30,17 @@ import com.mapsindoors.mapssdk.MPQuery;
 import com.mapsindoors.mapssdk.MPRoutingProvider;
 import com.mapsindoors.mapssdk.MapControl;
 import com.mapsindoors.mapssdk.MapsIndoors;
+import com.mapsindoors.mapssdk.OnPositionUpdateListener;
 import com.mapsindoors.mapssdk.OnRouteResultListener;
 import com.mapsindoors.mapssdk.Point;
+import com.mapsindoors.mapssdk.PositionProvider;
+import com.mapsindoors.mapssdk.PositionResult;
 import com.mapsindoors.mapssdk.Route;
 import com.mapsindoors.mapssdk.TravelMode;
 import com.mapsindoors.mapssdk.Venue;
 import com.mapsindoors.mapssdk.errors.MIError;
+
+import org.jetbrains.annotations.NotNull;
 
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, OnRouteResultListener {
@@ -48,6 +56,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SearchFragment mSearchFragment;
     private Fragment mCurrentFragment;
     private BottomSheetBehavior<FrameLayout> mBtmnSheetBehavior;
+    private PointrPositionProvider mPointrPositionProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -113,6 +122,38 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             }
         });
+
+        setupPositioning();
+    }
+
+    private void setupPositioning(){
+        mPointrPositionProvider = new PointrPositionProvider(this, "----");
+        MapsIndoors.setPositionProvider(mPointrPositionProvider);
+        MapsIndoors.startPositioning();
+
+        mPointrPositionProvider.addOnPositionUpdateListener(new OnPositionUpdateListener() {
+            @Override
+            public void onPositioningStarted(@NonNull @NotNull PositionProvider positionProvider) {
+
+            }
+
+            @Override
+            public void onPositionFailed(@NonNull @NotNull PositionProvider positionProvider) {
+
+            }
+
+            @Override
+            public void onPositionUpdate(@NonNull @NotNull PositionResult positionResult) {
+                runOnUiThread(() -> {
+                    mMapControl.getPositionIndicator().setIconFromDisplayRule( new LocationDisplayRule.Builder( "BlueDotRule" )
+                            .setVectorDrawableIcon(R.drawable.walk, 23, 23 )
+                            .setTint(Color.RED)
+                            .setShowLabel(false)
+                            .setLabel(null).
+                            build());
+                });
+            }
+        });
     }
 
     /**
@@ -149,6 +190,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMapControl = new MapControl(this);
         //Sets the Google map object and the map view to the MapControl
         mMapControl.setGoogleMap(mMap, view);
+
+
         //Initiates the MapControl
         mMapControl.init(miError -> {
             if (miError == null) {
@@ -157,7 +200,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 runOnUiThread( ()-> {
                     if (venue != null) {
                         //Animates the camera to fit the new venue
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(venue.getLatLngBoundingBox(), 19));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(venue.getLatLngBoundingBox(), 10));
                     }
                 });
             }
