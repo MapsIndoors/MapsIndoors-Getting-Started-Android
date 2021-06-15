@@ -16,14 +16,6 @@ allprojects {
     repositories {
         google()
         jcenter()
-
-        maven {
-            url "https://android.pointr.dev/artifactory/gradle-release-local"
-            credentials {
-                username '----'
-                password '----'
-            }
-        }
     }
 }
 

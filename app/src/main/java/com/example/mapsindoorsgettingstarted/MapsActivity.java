@@ -1,10 +1,5 @@
 package com.example.mapsindoorsgettingstarted;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.graphics.Color;
@@ -15,9 +10,15 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
-import com.example.mapsindoorsgettingstarted.PositionProviders.PointrPositionProvider;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+
+import com.example.mapsindoorsgettingstarted.PositionProviders.CiscoDNAPositionProvider;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -30,17 +31,22 @@ import com.mapsindoors.mapssdk.MPQuery;
 import com.mapsindoors.mapssdk.MPRoutingProvider;
 import com.mapsindoors.mapssdk.MapControl;
 import com.mapsindoors.mapssdk.MapsIndoors;
+import com.mapsindoors.mapssdk.OnLocationSelectedListener;
+import com.mapsindoors.mapssdk.OnMapsIndoorsReadyListener;
 import com.mapsindoors.mapssdk.OnPositionUpdateListener;
 import com.mapsindoors.mapssdk.OnRouteResultListener;
 import com.mapsindoors.mapssdk.Point;
 import com.mapsindoors.mapssdk.PositionProvider;
 import com.mapsindoors.mapssdk.PositionResult;
+import com.mapsindoors.mapssdk.Renderer;
 import com.mapsindoors.mapssdk.Route;
 import com.mapsindoors.mapssdk.TravelMode;
 import com.mapsindoors.mapssdk.Venue;
 import com.mapsindoors.mapssdk.errors.MIError;
 
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 
 public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback, OnRouteResultListener {
@@ -56,7 +62,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SearchFragment mSearchFragment;
     private Fragment mCurrentFragment;
     private BottomSheetBehavior<FrameLayout> mBtmnSheetBehavior;
-    private PointrPositionProvider mPointrPositionProvider;
+
+    private PositionProvider mCiscoDNAPositionProvider;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,7 +76,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMapView = mapFragment.getView();
 
         //Initialize MapsIndoors and set the google api Key
-        MapsIndoors.initialize(getApplicationContext(), "79f8e7daff76489dace4f9f9");
+        MapsIndoors.initialize(getApplicationContext(), "mapspeople");
         MapsIndoors.setGoogleAPIKey(getString(R.string.google_maps_key));
 
         ImageButton searchBtn = findViewById(R.id.search_btn);
@@ -123,37 +130,49 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             }
         });
 
-        setupPositioning();
+        MapsIndoors.setOnMapsIndoorsReadyListener(new OnMapsIndoorsReadyListener() {
+            @Override
+            public void onMapsIndoorsReady() {
+                setupPositioning();
+            }
+        });
     }
 
     private void setupPositioning(){
-        mPointrPositionProvider = new PointrPositionProvider(this, "----");
-        MapsIndoors.setPositionProvider(mPointrPositionProvider);
+        Map<String, Object> ciscoDnaConfig = MapsIndoors.getSolution().getPositionProviderConfig().get("ciscodna");
+        String tenantId = (String) ciscoDnaConfig.get("ciscoDnaSpaceTenantId");
+
+        if(tenantId == null || tenantId.isEmpty()){
+            // Cannot setup CiscoDNA positioning in this case
+            return;
+        }
+
+        mCiscoDNAPositionProvider = new CiscoDNAPositionProvider(this, tenantId);
+        MapsIndoors.setPositionProvider(mCiscoDNAPositionProvider);
         MapsIndoors.startPositioning();
+        mMapControl.showUserPosition(true);
 
-        mPointrPositionProvider.addOnPositionUpdateListener(new OnPositionUpdateListener() {
+        mCiscoDNAPositionProvider.addOnPositionUpdateListener(new OnPositionUpdateListener() {
             @Override
-            public void onPositioningStarted(@NonNull @NotNull PositionProvider positionProvider) {
-
-            }
+            public void onPositioningStarted(@NonNull @NotNull PositionProvider positionProvider) { }
 
             @Override
-            public void onPositionFailed(@NonNull @NotNull PositionProvider positionProvider) {
-
-            }
+            public void onPositionFailed(@NonNull @NotNull PositionProvider positionProvider) { }
 
             @Override
             public void onPositionUpdate(@NonNull @NotNull PositionResult positionResult) {
                 runOnUiThread(() -> {
                     mMapControl.getPositionIndicator().setIconFromDisplayRule( new LocationDisplayRule.Builder( "BlueDotRule" )
-                            .setVectorDrawableIcon(R.drawable.walk, 23, 23 )
-                            .setTint(Color.RED)
-                            .setShowLabel(false)
-                            .setLabel(null).
-                            build());
+                            .setVectorDrawableIcon(android.R.drawable.presence_invisible, 23, 23 )
+                            .setTint(Color.BLUE)
+                            .setShowLabel(true)
+                            .setLabel("You")
+                            .setLabel(null)
+                            .build());
                 });
             }
         });
+
     }
 
     /**
@@ -202,6 +221,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                         //Animates the camera to fit the new venue
                         mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(venue.getLatLngBoundingBox(), 10));
                     }
+
                 });
             }
         });
