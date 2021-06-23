@@ -20,6 +20,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.textfield.TextInputEditText;
+import com.mapsindoors.livesdk.LiveDataDomainTypes;
 import com.mapsindoors.mapssdk.MPDirectionsRenderer;
 import com.mapsindoors.mapssdk.MPFilter;
 import com.mapsindoors.mapssdk.MPLocation;
@@ -60,7 +61,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         mMapView = mapFragment.getView();
 
         //Initialize MapsIndoors and set the google api Key
-        MapsIndoors.initialize(getApplicationContext(), "79f8e7daff76489dace4f9f9");
+        MapsIndoors.initialize(getApplicationContext(), "d876ff0e60bb430b8fabb145");
         MapsIndoors.setGoogleAPIKey(getString(R.string.google_maps_key));
 
         ImageButton searchBtn = findViewById(R.id.search_btn);
@@ -147,6 +148,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     void initMapControl(View view) {
         //Creates a new instance of MapControl
         mMapControl = new MapControl(this);
+        //Enable live data on the map
+        enableLiveData();
         //Sets the Google map object and the map view to the MapControl
         mMapControl.setGoogleMap(mMap, view);
         //Initiates the MapControl
@@ -261,6 +264,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             //Starts drawing and adjusting the map according to the route
             mpDirectionsRenderer.initMap(true);
         });
+    }
+
+
+    /**
+     * Enables live data for the map.
+     */
+    void enableLiveData() {
+        //Enabling live data for the three known live data domains that are enabled for this solution.
+        mMapControl.enableLiveData(LiveDataDomainTypes.AVAILABILITY_DOMAIN);
+        mMapControl.enableLiveData(LiveDataDomainTypes.OCCUPANCY_DOMAIN);
+        mMapControl.enableLiveData(LiveDataDomainTypes.POSITION_DOMAIN);
     }
 
     void addFragmentToBottomSheet(Fragment newFragment) {
