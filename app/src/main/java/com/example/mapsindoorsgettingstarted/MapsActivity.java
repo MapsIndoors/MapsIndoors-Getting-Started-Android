@@ -271,7 +271,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Enables live data for the map.
      */
     void enableLiveData() {
-        //Enabling live data for the three known live data domains that are enabled for this solution.
+        //Enabling Live Data for the three known Live Data Domains enabled for this Solution.
         mMapControl.enableLiveData(LiveDataDomainTypes.AVAILABILITY_DOMAIN);
         mMapControl.enableLiveData(LiveDataDomainTypes.OCCUPANCY_DOMAIN);
         mMapControl.enableLiveData(LiveDataDomainTypes.POSITION_DOMAIN);
