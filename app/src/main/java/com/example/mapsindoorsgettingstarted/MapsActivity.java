@@ -148,7 +148,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     void initMapControl(View view) {
         //Creates a new instance of MapControl
         mMapControl = new MapControl(this);
-        //Enable live data on the map
+        //Enable Live Data on the map
         enableLiveData();
         //Sets the Google map object and the map view to the MapControl
         mMapControl.setGoogleMap(mMap, view);
