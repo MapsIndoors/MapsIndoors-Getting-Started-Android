@@ -8,8 +8,8 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.mapsindoors.mapssdk.LocationDisplayRule;
 import com.mapsindoors.mapssdk.MPLocation;
+import com.mapsindoors.mapssdk.MPLocationDisplayRule;
 
 import java.util.List;
 
@@ -37,24 +37,24 @@ class SearchItemAdapter extends RecyclerView.Adapter<ViewHolder> {
         holder.itemView.setOnClickListener(view -> {
             mMapActivity.createRoute(mLocations.get(position));
             //Clearing map to remove the location filter from our search result
-            mMapActivity.getMapControl().clearMap();
+            mMapActivity.getMapControl().clearFilter();
         });
 
         if (mMapActivity != null) {
             //We start by checking if there is a specific Location icon assigned to the location
-            LocationDisplayRule locationDisplayRule = mMapActivity.getMapControl().getDisplayRule(mLocations.get(position));
+            MPLocationDisplayRule locationDisplayRule = mMapActivity.getMapControl().getDisplayRule(mLocations.get(position));
 
             if (locationDisplayRule != null && locationDisplayRule.getIcon() != null) {
                 //There is a specific icon on this location so we use that
-                mMapActivity.runOnUiThread(()-> {
+                mMapActivity.runOnUiThread(() -> {
                     holder.imageView.setImageBitmap(locationDisplayRule.getIcon());
                 });
-            }else {
+            } else {
                 //Location does not have a specific displayRule, we instead use type Display rule
-                LocationDisplayRule typeDisplayRule = mMapActivity.getMapControl().getDisplayRule(mLocations.get(position).getType());
+                MPLocationDisplayRule typeDisplayRule = mMapActivity.getMapControl().getDisplayRule(mLocations.get(position).getType());
 
                 if (typeDisplayRule != null) {
-                    mMapActivity.runOnUiThread(()-> {
+                    mMapActivity.runOnUiThread(() -> {
                         holder.imageView.setImageBitmap(typeDisplayRule.getIcon());
                     });
                 }

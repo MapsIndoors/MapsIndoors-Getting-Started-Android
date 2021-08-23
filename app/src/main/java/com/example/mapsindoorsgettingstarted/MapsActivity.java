@@ -1,10 +1,5 @@
 package com.example.mapsindoorsgettingstarted;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
@@ -14,6 +9,11 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -21,18 +21,21 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
 import com.google.android.material.textfield.TextInputEditText;
 import com.mapsindoors.livesdk.LiveDataDomainTypes;
+import com.mapsindoors.mapssdk.MPDirectionsConfig;
 import com.mapsindoors.mapssdk.MPDirectionsRenderer;
+import com.mapsindoors.mapssdk.MPDirectionsService;
 import com.mapsindoors.mapssdk.MPFilter;
+import com.mapsindoors.mapssdk.MPFilterBehavior;
 import com.mapsindoors.mapssdk.MPLocation;
+import com.mapsindoors.mapssdk.MPMapConfig;
+import com.mapsindoors.mapssdk.MPPoint;
 import com.mapsindoors.mapssdk.MPQuery;
-import com.mapsindoors.mapssdk.MPRoutingProvider;
+import com.mapsindoors.mapssdk.MPRoute;
+import com.mapsindoors.mapssdk.MPTravelMode;
+import com.mapsindoors.mapssdk.MPVenue;
 import com.mapsindoors.mapssdk.MapControl;
 import com.mapsindoors.mapssdk.MapsIndoors;
 import com.mapsindoors.mapssdk.OnRouteResultListener;
-import com.mapsindoors.mapssdk.Point;
-import com.mapsindoors.mapssdk.Route;
-import com.mapsindoors.mapssdk.TravelMode;
-import com.mapsindoors.mapssdk.Venue;
 import com.mapsindoors.mapssdk.errors.MIError;
 
 
@@ -42,9 +45,9 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private MapControl mMapControl;
     private View mMapView;
     private TextInputEditText mSearchTxtField;
-    private MPRoutingProvider mpRoutingProvider;
+    private MPDirectionsService mpDirectionsService;
     private MPDirectionsRenderer mpDirectionsRenderer;
-    private Point mUserLocation = new Point(38.897389429704695, -77.03740973527613,0);
+    private MPPoint mUserLocation = new MPPoint(38.897389429704695, -77.03740973527613, 0);
     private NavigationFragment mNavigationFragment;
     private SearchFragment mSearchFragment;
     private Fragment mCurrentFragment;
@@ -60,8 +63,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //The local variable for the MapFragments view.
         mMapView = mapFragment.getView();
 
-        //Initialize MapsIndoors and set the google api Key
-        MapsIndoors.initialize(getApplicationContext(), "d876ff0e60bb430b8fabb145");
+        //Initialize MapsIndoors and set the google api Key, we do not need a listener in this showcase
+        MapsIndoors.initialize(getApplicationContext(), "d876ff0e60bb430b8fabb145", null);
         MapsIndoors.setGoogleAPIKey(getString(R.string.google_maps_key));
 
         ImageButton searchBtn = findViewById(R.id.search_btn);
@@ -101,8 +104,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                             //Clears the direction view if the navigation fragment is closed.
                             mpDirectionsRenderer.clear();
                         }
-                        //Clears the map if any searches has been done.
-                        mMapControl.clearMap();
+                        //Clears the filtered locations from map if any searches has been done.
+                        mMapControl.clearFilter();
                         //Removes the current fragment from the BottomSheet.
                         removeFragmentFromBottomSheet(mCurrentFragment);
                     }
@@ -118,6 +121,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     /**
      * Public getter for the MapControl object
+     *
      * @return MapControl object for this activity
      */
     public MapControl getMapControl() {
@@ -125,7 +129,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
-     * Public getter for the
+     * Public getter for the MPDirectionsRenderer object
+     *
      * @return MPDirectionRenderer object for this activity
      */
     public MPDirectionsRenderer getMpDirectionsRenderer() {
@@ -142,33 +147,46 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     /**
-     * Inits mapControl and sets the camera to the venue.
+     * Inits MapControl with a basic configuration.
+     *
      * @param view the view assigned to the google map.
      */
     void initMapControl(View view) {
+        //Makes a basic configuration for MapControl
+        MPMapConfig config = new MPMapConfig.Builder(this, mMap, view).build();
+
         //Creates a new instance of MapControl
-        mMapControl = new MapControl(this);
-        //Enable live data on the map
-        enableLiveData();
-        //Sets the Google map object and the map view to the MapControl
-        mMapControl.setGoogleMap(mMap, view);
-        //Initiates the MapControl
-        mMapControl.init(miError -> {
-            if (miError == null) {
-                //No errors so getting the first venue (in the white house solution the only one)
-                Venue venue = MapsIndoors.getVenues().getCurrentVenue();
-                runOnUiThread( ()-> {
-                    if (venue != null) {
-                        //Animates the camera to fit the new venue
-                        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(venue.getLatLngBoundingBox(), 19));
-                    }
-                });
-            }
-        });
+        MapControl.create(config, this::onMapControlReady);
+
     }
 
     /**
-     * Performs a search for locations with mapsindoors and opens up a list of search results
+     * Triggers when MapControl has initialized, here we assign it, and move the camera to the venue.
+     *
+     * @param mapControl the initialized MapControl
+     * @param error whether an error occured
+     */
+    public void onMapControlReady(MapControl mapControl, MIError error) {
+        //Sets the Google map object and the map view to the MapControl
+        if (error == null) {
+            // Sets the local MapControl so that it can be used later
+            mMapControl = mapControl;
+            //No errors so getting the first venue (in the white house solution the only one)
+            MPVenue venue = MapsIndoors.getVenues().getCurrentVenue();
+            runOnUiThread(() -> {
+                if (venue != null) {
+                    //Animates the camera to fit the new venue
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(venue.getLatLngBoundingBox(), 19));
+                }
+            });
+            //Enable live data on the map
+            enableLiveData();
+        }
+    }
+
+    /**
+     * Performs a search for locations with MapsIndoors and opens up a list of search results
+     *
      * @param searchQuery String to search for
      */
     void search(String searchQuery) {
@@ -187,21 +205,27 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 addFragmentToBottomSheet(mSearchFragment);
                 //Clear the search text, since we got a result
                 mSearchTxtField.getText().clear();
-                //Calling displaySearch results on the ui thread as camera movement is involved
-                runOnUiThread(()-> {
-                    mMapControl.displaySearchResults(list, true);
+                //Create a behavior for the map when filtering,
+                // we want the map to move so that the filtered locations are in shot
+                MPFilterBehavior behavior = new MPFilterBehavior.Builder()
+                        .setMoveCamera(true)
+                        .setAnimationDuration(500)
+                        .build();
+                //Calling setFilter results on the ui thread as camera movement is involved
+                runOnUiThread(() -> {
+                    mMapControl.setFilter(list, behavior);
                 });
-            }else {
+            } else {
                 String alertDialogTitleTxt;
                 String alertDialogTxt;
                 if (list.isEmpty()) {
                     alertDialogTitleTxt = "No results found";
                     alertDialogTxt = "No results could be found for your search text. Try something else";
-                }else {
+                } else {
                     if (miError != null) {
                         alertDialogTitleTxt = "Error: " + miError.code;
                         alertDialogTxt = miError.message;
-                    }else {
+                    } else {
                         alertDialogTitleTxt = "Unknown error";
                         alertDialogTxt = "Something went wrong, try another search text";
                     }
@@ -217,27 +241,30 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     /**
      * Queries the MPRouting provider with a hardcoded user location and the location the user should be routed to
+     *
      * @param mpLocation A MPLocation to navigate to
      */
     void createRoute(MPLocation mpLocation) {
-        //If MPRoutingProvider has not been instantiated create it here and assign the results call back to the activity.
-        if (mpRoutingProvider == null) {
-            mpRoutingProvider = new MPRoutingProvider();
-            mpRoutingProvider.setOnRouteResultListener(this);
+        //If MPDirectionsService has not been instantiated create it here and assign the results call back to the activity.
+        if (mpDirectionsService == null) {
+            //Creating a configuration for the MPDirectionsService allows us to set a resultListener and a travelMode.
+            MPDirectionsConfig config = new MPDirectionsConfig.Builder().setOnRouteResultListener(this).setTravelMode(MPTravelMode.WALKING).build();
+
+            mpDirectionsService = new MPDirectionsService(config);
         }
-        mpRoutingProvider.setTravelMode(TravelMode.WALKING);
-        //Queries the MPRouting provider for a route with the hardcoded user location and the point from a location.
-        mpRoutingProvider.query(mUserLocation, mpLocation.getPoint());
+        //Queries the MPDirectionsService for a route with the hardcoded user location and the point from a location.
+        mpDirectionsService.query(mUserLocation, mpLocation.getPoint());
     }
 
     /**
      * The result callback from the route query. Starts the rendering of the route and opens up a new instance of the navigation fragment on the bottom sheet.
-     * @param route the route model used to render a navigation view.
+     *
+     * @param route   the route model used to render a navigation view.
      * @param miError an MIError if anything goes wrong when generating a route
      */
     @Override
-    public void onRouteResult(@Nullable Route route, @Nullable MIError miError) {
-        //Return if either error is not null or the route is null
+    public void onRouteResult(@Nullable MPRoute route, @Nullable MIError miError) {
+        //Early return if either error is not null or the route is null
         if (miError != null || route == null) {
             new AlertDialog.Builder(this)
                     .setTitle("Something went wrong")
@@ -248,21 +275,21 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Create the MPDirectionsRenderer if it has not been instantiated.
         if (mpDirectionsRenderer == null) {
             mpDirectionsRenderer = new MPDirectionsRenderer(this, mMap, mMapControl, i -> {
-                //Listener call back for when the user changes route leg. (By default is only called when a user presses the RouteLegs end marker)
+                //Listener callback for when the user changes route leg. (By default is only called when a user presses the RouteLegs end marker)
                 mpDirectionsRenderer.setRouteLegIndex(i);
-                mMapControl.selectFloor(mpDirectionsRenderer.getCurrentFloor());
+                mMapControl.selectFloor(mpDirectionsRenderer.getLegFloorIndex());
             });
         }
-        //Set the route on the Directions renderer
+        //Set the route on the MPDirectionsRenderer
         mpDirectionsRenderer.setRoute(route);
         //Create a new instance of the navigation fragment
         mNavigationFragment = NavigationFragment.newInstance(route, this);
         //Add the fragment to the BottomSheet
         addFragmentToBottomSheet(mNavigationFragment);
         //As camera movement is involved run this on the UIThread
-        runOnUiThread(()-> {
+        runOnUiThread(() -> {
             //Starts drawing and adjusting the map according to the route
-            mpDirectionsRenderer.initMap(true);
+            mpDirectionsRenderer.renderOnMap();
         });
     }
 
@@ -284,8 +311,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         getSupportFragmentManager().beginTransaction().replace(R.id.standardBottomSheet, newFragment).commit();
         mCurrentFragment = newFragment;
         //Set the map padding to the height of the bottom sheets peek height. To not obfuscate the google logo.
-        runOnUiThread(()-> {
-            mMapControl.setMapPadding(0, 0,0, mBtmnSheetBehavior.getPeekHeight());
+        runOnUiThread(() -> {
+            mMapControl.setMapPadding(0, 0, 0, mBtmnSheetBehavior.getPeekHeight());
             if (mBtmnSheetBehavior.getState() == BottomSheetBehavior.STATE_HIDDEN) {
                 mBtmnSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
             }
@@ -297,8 +324,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             mCurrentFragment = null;
         }
         getSupportFragmentManager().beginTransaction().remove(fragment).commit();
-        runOnUiThread(()-> {
-            mMapControl.setMapPadding(0,0,0,0);
+        runOnUiThread(() -> {
+            mMapControl.setMapPadding(0, 0, 0, 0);
         });
     }
 }

@@ -1,18 +1,17 @@
 package com.example.mapsindoorsgettingstarted;
 
 import android.os.Bundle;
-
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.fragment.app.Fragment;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.mapsindoors.mapssdk.RouteLeg;
-import com.mapsindoors.mapssdk.RouteStep;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
+import com.mapsindoors.mapssdk.MPRouteLeg;
+import com.mapsindoors.mapssdk.MPRouteStep;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -20,9 +19,9 @@ import com.mapsindoors.mapssdk.RouteStep;
  * create an instance of this fragment.
  */
 public class RouteLegFragment extends Fragment {
-    private RouteLeg mRouteLeg;
+    private MPRouteLeg mRouteLeg;
 
-    public static RouteLegFragment newInstance(RouteLeg routeLeg) {
+    public static RouteLegFragment newInstance(MPRouteLeg routeLeg) {
         RouteLegFragment fragment = new RouteLegFragment();
         fragment.mRouteLeg = routeLeg;
         return fragment;
@@ -48,7 +47,7 @@ public class RouteLegFragment extends Fragment {
         String stepsString = "";
         //A loop to write what to do for each step of the leg.
         for (int i = 0; i < mRouteLeg.getSteps().size(); i++) {
-            RouteStep routeStep = mRouteLeg.getSteps().get(i);
+            MPRouteStep routeStep = mRouteLeg.getSteps().get(i);
             stepsString += "Step " + (i + 1) + " " + routeStep.getManeuver() + "\n";
         }
         stepTxtView.setText(stepsString);

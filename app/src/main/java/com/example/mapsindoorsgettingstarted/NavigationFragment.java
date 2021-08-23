@@ -1,23 +1,19 @@
 package com.example.mapsindoorsgettingstarted;
 
 import android.os.Bundle;
-
-import androidx.annotation.Nullable;
-import androidx.annotation.NonNull;
-
-import com.mapsindoors.mapssdk.Route;
-
-import androidx.fragment.app.Fragment;
-import androidx.viewpager2.adapter.FragmentStateAdapter;
-import androidx.viewpager2.widget.ViewPager2;
-
-import android.text.format.DateUtils;
-import android.util.TimeUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.viewpager2.adapter.FragmentStateAdapter;
+import androidx.viewpager2.widget.ViewPager2;
+
+import com.mapsindoors.mapssdk.MPRoute;
 
 import java.util.concurrent.TimeUnit;
 
@@ -29,10 +25,10 @@ import java.util.concurrent.TimeUnit;
  * </pre>
  */
 public class NavigationFragment extends Fragment {
-    private Route mRoute;
+    private MPRoute mRoute;
     private MapsActivity mMapsActivity;
 
-    public static NavigationFragment newInstance(Route route, MapsActivity mapsActivity) {
+    public static NavigationFragment newInstance(MPRoute route, MapsActivity mapsActivity) {
         final NavigationFragment fragment = new NavigationFragment();
         fragment.mRoute = route;
         fragment.mMapsActivity = mapsActivity;
@@ -62,8 +58,8 @@ public class NavigationFragment extends Fragment {
                 super.onPageSelected(position);
                 //When a page is selected call the renderer with the index
                 mMapsActivity.getMpDirectionsRenderer().setRouteLegIndex(position);
-                //Update the floor on mapcontrol if the floor might have changed for the routing
-                mMapsActivity.getMapControl().selectFloor(mMapsActivity.getMpDirectionsRenderer().getCurrentFloor());
+                //Update the floor on MapControl if the floor might have changed for the routing
+                mMapsActivity.getMapControl().selectFloor(mMapsActivity.getMpDirectionsRenderer().getLegFloorIndex());
             }
         });
 
@@ -74,7 +70,7 @@ public class NavigationFragment extends Fragment {
         ImageButton nextBtn = view.findViewById(R.id.arrow_next);
         ImageButton backBtn = view.findViewById(R.id.arrow_back);
 
-        //Button for closing the bottom sheet. Clears the route through directionsRenderer as well, and changes map padding.
+        //Button for closing the bottom sheet. Clears the route through MPDirectionsRenderer as well, and changes map padding.
         closeBtn.setOnClickListener(v -> {
             mMapsActivity.removeFragmentFromBottomSheet(this);
             mMapsActivity.getMpDirectionsRenderer().clear();
