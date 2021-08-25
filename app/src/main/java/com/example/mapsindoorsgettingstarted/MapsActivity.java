@@ -164,12 +164,11 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      * Triggers when MapControl has initialized, here we assign it, and move the camera to the venue.
      *
      * @param mapControl the initialized MapControl
-     * @param error whether an error occured
+     * @param error      whether an error occured
      */
     public void onMapControlReady(MapControl mapControl, MIError error) {
-        //Sets the Google map object and the map view to the MapControl
         if (error == null) {
-            // Sets the local MapControl so that it can be used later
+            // Sets the local MapControl variable so that it can be used later
             mMapControl = mapControl;
             //No errors so getting the first venue (in the white house solution the only one)
             MPVenue venue = MapsIndoors.getVenues().getCurrentVenue();
