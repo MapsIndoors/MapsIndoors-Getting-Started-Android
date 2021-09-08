@@ -16,6 +16,9 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven {
+            url "https://dl.cloudsmith.io/public/indooratlas/mvn-public/maven/"
+        }
     }
 }
 

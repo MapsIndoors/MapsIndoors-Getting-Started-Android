@@ -16,6 +16,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
 import com.example.mapsindoorsgettingstarted.PositionProviders.CiscoDNAPositionProvider;
+import com.example.mapsindoorsgettingstarted.PositionProviders.GPSPositionProvider;
+import com.example.mapsindoorsgettingstarted.PositionProviders.IndoorAtlasPositionProvider;
+import com.example.mapsindoorsgettingstarted.PositionProviders.PositionProviderService;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -35,6 +38,7 @@ import com.mapsindoors.mapssdk.OnLocationSelectedListener;
 import com.mapsindoors.mapssdk.OnMapsIndoorsReadyListener;
 import com.mapsindoors.mapssdk.OnPositionUpdateListener;
 import com.mapsindoors.mapssdk.OnRouteResultListener;
+import com.mapsindoors.mapssdk.PermissionsAndPSListener;
 import com.mapsindoors.mapssdk.Point;
 import com.mapsindoors.mapssdk.PositionProvider;
 import com.mapsindoors.mapssdk.PositionResult;
@@ -62,8 +66,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SearchFragment mSearchFragment;
     private Fragment mCurrentFragment;
     private BottomSheetBehavior<FrameLayout> mBtmnSheetBehavior;
-
-    private PositionProvider mCiscoDNAPositionProvider;
+    private PositionProviderService mPositionProviderService;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,50 +132,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             }
         });
-
-        MapsIndoors.setOnMapsIndoorsReadyListener(new OnMapsIndoorsReadyListener() {
-            @Override
-            public void onMapsIndoorsReady() {
-                setupPositioning();
-            }
-        });
-    }
-
-    private void setupPositioning(){
-        Map<String, Object> ciscoDnaConfig = MapsIndoors.getSolution().getPositionProviderConfig().get("ciscodna");
-        String tenantId = (String) ciscoDnaConfig.get("ciscoDnaSpaceTenantId");
-
-        if(tenantId == null || tenantId.isEmpty()){
-            // Cannot setup CiscoDNA positioning in this case
-            return;
-        }
-
-        mCiscoDNAPositionProvider = new CiscoDNAPositionProvider(this, tenantId);
-        MapsIndoors.setPositionProvider(mCiscoDNAPositionProvider);
-        MapsIndoors.startPositioning();
-        mMapControl.showUserPosition(true);
-
-        mCiscoDNAPositionProvider.addOnPositionUpdateListener(new OnPositionUpdateListener() {
-            @Override
-            public void onPositioningStarted(@NonNull @NotNull PositionProvider positionProvider) { }
-
-            @Override
-            public void onPositionFailed(@NonNull @NotNull PositionProvider positionProvider) { }
-
-            @Override
-            public void onPositionUpdate(@NonNull @NotNull PositionResult positionResult) {
-                runOnUiThread(() -> {
-                    mMapControl.getPositionIndicator().setIconFromDisplayRule( new LocationDisplayRule.Builder( "BlueDotRule" )
-                            .setVectorDrawableIcon(android.R.drawable.presence_invisible, 23, 23 )
-                            .setTint(Color.BLUE)
-                            .setShowLabel(true)
-                            .setLabel("You")
-                            .setLabel(null)
-                            .build());
-                });
-            }
-        });
-
     }
 
     /**
@@ -223,6 +182,12 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                     }
 
                 });
+
+                mPositionProviderService = new PositionProviderService(this, mMapControl);
+                //TODO: Uncomment for the specific positioning you want to test
+                //mPositionProviderService.setupCiscoPositioning();
+                //mPositionProviderService.setupIndoorAtlasPositioning();
+                //mPositionProviderService.setupGooglePositioning();
             }
         });
     }
@@ -349,5 +314,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         runOnUiThread(()-> {
             mMapControl.setMapPadding(0,0,0,0);
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        MapsIndoors.startPositioning();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        MapsIndoors.stopPositioning();
     }
 }

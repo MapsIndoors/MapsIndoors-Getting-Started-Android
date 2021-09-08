@@ -28,13 +28,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * PSUtils
- * MapsIndoorsDemo
- * <p>
- * Created by Amine on 02/08/2017.
- * Copyright © 2017 MapsPeople A/S. All rights reserved.
- */
 @SuppressWarnings({"WeakerAccess"})
 public class PSUtils {
     static final String TAG = PSUtils.class.getSimpleName();
@@ -206,9 +199,6 @@ public class PSUtils {
 
 				} else {
 					//permission denied
-					for(PermissionDeniedResponse response : report.getDeniedPermissionResponses()){
-						Log.d("frha", response.getPermissionName());
-					}
 					if( gpsPermissionAndServiceListener != null ) {
 						gpsPermissionAndServiceListener.onPermissionDenied();
 					}
@@ -216,10 +206,6 @@ public class PSUtils {
                     boolean permanentlyDenied = report.isAnyPermissionPermanentlyDenied();
                     if (permanentlyDenied) {
                         showNOGPSPermissionAlertDialogue(context);
-                    }
-
-                    if (dbglog.isDeveloperMode()) {
-                        dbglog.Log(TAG, "Dexter.onPermissionDenied: User has denied permissions and selected 'Never ask again'");
                     }
                 }
             }
