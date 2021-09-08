@@ -153,10 +153,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
      */
     void initMapControl(View view) {
         //Makes a basic configuration for MapControl
-        MPMapConfig config = new MPMapConfig.Builder(this, mMap, view).build();
+        MPMapConfig mapConfig = new MPMapConfig.Builder(this, mMap, view).build();
 
         //Creates a new instance of MapControl
-        MapControl.create(config, this::onMapControlReady);
+        MapControl.create(mapConfig, this::onMapControlReady);
 
     }
 
@@ -249,7 +249,8 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
             //Creating a configuration for the MPDirectionsService allows us to set a resultListener and a travelMode.
             MPDirectionsConfig config = new MPDirectionsConfig.Builder().setOnRouteResultListener(this).setTravelMode(MPTravelMode.WALKING).build();
 
-            mpDirectionsService = new MPDirectionsService(config);
+            mpDirectionsService = new MPDirectionsService();
+            mpDirectionsService.setConfig(config);
         }
         //Queries the MPDirectionsService for a route with the hardcoded user location and the point from a location.
         mpDirectionsService.query(mUserLocation, mpLocation.getPoint());
