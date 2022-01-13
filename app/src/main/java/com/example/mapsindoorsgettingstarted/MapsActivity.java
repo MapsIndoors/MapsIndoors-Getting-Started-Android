@@ -47,6 +47,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Point mUserLocation = new Point(38.897389429704695, -77.03740973527613,0);
     private NavigationFragment mNavigationFragment;
     private SearchFragment mSearchFragment;
+    private MenuFragment mMenuFragment;
     private Fragment mCurrentFragment;
     private BottomSheetBehavior<FrameLayout> mBtmnSheetBehavior;
 
@@ -69,12 +70,17 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
         //ClickListener to start a search, when the user clicks the search button
         searchBtn.setOnClickListener(view -> {
+            mMenuFragment = MenuFragment.newInstance(MapsIndoors.getAppConfig().getMenuInfo("mainmenu"), this);
+            //Make a transaction to the bottomsheet
+            addFragmentToBottomSheet(mMenuFragment);
+            /*
             if (mSearchTxtField.getText().length() != 0) {
                 //There is text inside the search field. So lets do the search.
                 search(mSearchTxtField.getText().toString());
                 //Making sure keyboard is closed.
                 imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
             }
+            */
         });
         //Listener for when the user searches through the keyboard
         mSearchTxtField.setOnEditorActionListener((textView, i, keyEvent) -> {
