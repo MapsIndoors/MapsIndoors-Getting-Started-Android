@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
-
+// We will reuse the ViewHolder created in the search experience as it can hold the same information we want to show here
 public class MenuItemAdapter extends RecyclerView.Adapter<ViewHolder> {
 
     private final List<MenuInfo> mMenuInfos;
@@ -41,29 +41,40 @@ public class MenuItemAdapter extends RecyclerView.Adapter<ViewHolder> {
         //Setting the the text on the text view to the name of the location
         holder.text.setText(mMenuInfos.get(position).getName());
 
+        // When a category is selected, we want to filter the map s.t. it only shows the locations in that
+        // category
         holder.itemView.setOnClickListener(view -> {
-            MapsIndoors.getLocationsAsync(new MPQuery.Builder().build(),
-                    new MPFilter.Builder().setCategories(Collections.singletonList(mMenuInfos.get(position).getCategoryKey())).build(),
-                    (locations ,error) -> {
+            // empty query, we do not need to query anything specific
+            MPQuery query = new MPQuery.Builder().build();
+            // filter created on the selected category key
+            MPFilter filter = new MPFilter.Builder().setCategories(Collections.singletonList(mMenuInfos.get(position).getCategoryKey())).build();
+            MapsIndoors.getLocationsAsync(query, filter, (locations ,error) -> {
                 if (error == null) {
                     mMapActivity.getMapControl().displaySearchResults(locations);
                 }
             });
         });
 
-        new Thread(() -> {
-            Bitmap image;
-            try {
-                URL url = new URL(mMenuInfos.get(position).getIconUrl());
-                image = BitmapFactory.decodeStream(url.openConnection().getInputStream());
-            } catch(IOException ignored) {
-                return;
-            }
-            new Handler(Looper.getMainLooper()).post(() -> {
-                holder.imageView.setImageBitmap(image);
-            });
+        // if there exists an icon for this menuItem, then we will use it
+        if (mMenuInfos.get(position).getIconUrl() != null) {
+            // As we need to download the image, it has to be offloaded from the main thread
+            new Thread(() -> {
+                Bitmap image;
+                try {
+                    URL url = new URL(mMenuInfos.get(position).getIconUrl());
+                    image = BitmapFactory.decodeStream(url.openConnection().getInputStream());
+                } catch(IOException ignored) {
+                    return;
+                }
+                //Set the image while on the main thread
+                new Handler(Looper.getMainLooper()).post(() -> {
+                    holder.imageView.setImageBitmap(image);
+                });
 
-        }).start();
+            }).start();
+        }
+
+
     }
 
     @Override

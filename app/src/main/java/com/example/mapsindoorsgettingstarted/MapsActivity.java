@@ -70,9 +70,6 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         InputMethodManager imm = (InputMethodManager) getSystemService(Activity.INPUT_METHOD_SERVICE);
         //ClickListener to start a search, when the user clicks the search button
         searchBtn.setOnClickListener(view -> {
-            mMenuFragment = MenuFragment.newInstance(MapsIndoors.getAppConfig().getMenuInfo("mainmenu"), this);
-            //Make a transaction to the bottomsheet
-            addFragmentToBottomSheet(mMenuFragment);
             /*
             if (mSearchTxtField.getText().length() != 0) {
                 //There is text inside the search field. So lets do the search.
@@ -81,6 +78,10 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
                 imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
             }
             */
+            // Lets hijack the searchbutton
+            mMenuFragment = MenuFragment.newInstance(MapsIndoors.getAppConfig().getMenuInfo("mainmenu"), this);
+            //Make a transaction to the bottomsheet
+            addFragmentToBottomSheet(mMenuFragment);
         });
         //Listener for when the user searches through the keyboard
         mSearchTxtField.setOnEditorActionListener((textView, i, keyEvent) -> {

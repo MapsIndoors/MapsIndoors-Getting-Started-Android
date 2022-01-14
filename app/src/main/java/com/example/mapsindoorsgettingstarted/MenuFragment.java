@@ -33,6 +33,7 @@ public class MenuFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        // For the brevity of this guide, we will reuse the bottom sheet used in the searchFragment
         return inflater.inflate(R.layout.fragment_search_list, container, false);
     }
 
