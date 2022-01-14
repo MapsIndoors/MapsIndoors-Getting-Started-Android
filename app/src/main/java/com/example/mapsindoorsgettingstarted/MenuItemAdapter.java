@@ -61,6 +61,7 @@ public class MenuItemAdapter extends RecyclerView.Adapter<ViewHolder> {
             new Thread(() -> {
                 Bitmap image;
                 try {
+                    // Usually we would not want to re-download the image every time, but that is not important for this guide
                     URL url = new URL(mMenuInfos.get(position).getIconUrl());
                     image = BitmapFactory.decodeStream(url.openConnection().getInputStream());
                 } catch(IOException ignored) {
