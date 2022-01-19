@@ -25,8 +25,8 @@ public class MenuItemAdapter extends RecyclerView.Adapter<ViewHolder> {
     private final List<MenuInfo> mMenuInfos;
     private final MapsActivity mMapActivity;
 
-    MenuItemAdapter(List<MenuInfo> locationList, MapsActivity activity) {
-        mMenuInfos = locationList;
+    MenuItemAdapter(List<MenuInfo> menuInfoList, MapsActivity activity) {
+        mMenuInfos = menuInfoList;
         mMapActivity = activity;
     }
 
@@ -48,8 +48,8 @@ public class MenuItemAdapter extends RecyclerView.Adapter<ViewHolder> {
             MPQuery query = new MPQuery.Builder().build();
             // filter created on the selected category key
             MPFilter filter = new MPFilter.Builder().setCategories(Collections.singletonList(mMenuInfos.get(position).getCategoryKey())).build();
-            MapsIndoors.getLocationsAsync(query, filter, (locations ,error) -> {
-                if (error == null) {
+            MapsIndoors.getLocationsAsync(query, filter, (locations, error) -> {
+                if (error == null && locations != null) {
                     mMapActivity.getMapControl().displaySearchResults(locations);
                 }
             });
