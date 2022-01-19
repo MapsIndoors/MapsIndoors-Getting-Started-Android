@@ -45,11 +45,6 @@ public class MenuFragment extends Fragment {
     }
 
     @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     public void onDestroyView() {
         // When we close the menu fragment we want to display all locations again, not just whichever were selected last
         mMapActivity.getMapControl().clearMap();
