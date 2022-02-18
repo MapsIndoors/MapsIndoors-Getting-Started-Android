@@ -5,7 +5,13 @@ import android.os.Bundle;
 import androidx.annotation.Nullable;
 import androidx.annotation.NonNull;
 
+import com.mapsindoors.mapssdk.Building;
+import com.mapsindoors.mapssdk.Highway;
+import com.mapsindoors.mapssdk.MPLocation;
+import com.mapsindoors.mapssdk.MapsIndoors;
 import com.mapsindoors.mapssdk.Route;
+import com.mapsindoors.mapssdk.RouteLeg;
+import com.mapsindoors.mapssdk.RouteStep;
 
 import androidx.fragment.app.Fragment;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
@@ -17,8 +23,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -31,11 +39,13 @@ import java.util.concurrent.TimeUnit;
 public class NavigationFragment extends Fragment {
     private Route mRoute;
     private MapsActivity mMapsActivity;
+    private MPLocation mLocation;
 
-    public static NavigationFragment newInstance(Route route, MapsActivity mapsActivity) {
+    public static NavigationFragment newInstance(Route route, MapsActivity mapsActivity, MPLocation location) {
         final NavigationFragment fragment = new NavigationFragment();
         fragment.mRoute = route;
         fragment.mMapsActivity = mapsActivity;
+        fragment.mLocation = location;
         return fragment;
     }
 
@@ -53,8 +63,11 @@ public class NavigationFragment extends Fragment {
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        TextView locationNameTxtView = view.findViewById(R.id.location_name);
+        locationNameTxtView.setText("To " + mLocation.getName());
+
         RouteCollectionAdapter routeCollectionAdapter = new RouteCollectionAdapter(this);
-        ViewPager2 mViewPager = view.findViewById(R.id.view_pager);
+        ViewPager2 mViewPager = view.findViewById(R.id.stepViewPager);
         mViewPager.setAdapter(routeCollectionAdapter);
         mViewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
             @Override
@@ -67,33 +80,57 @@ public class NavigationFragment extends Fragment {
             }
         });
 
-        //Assigning views
-        TextView distanceTxtView = view.findViewById(R.id.distanceTxt);
-        TextView infoTxtView = view.findViewById(R.id.infoTxt);
-        ImageButton closeBtn = view.findViewById(R.id.closeBtn);
-        ImageButton nextBtn = view.findViewById(R.id.arrow_next);
-        ImageButton backBtn = view.findViewById(R.id.arrow_back);
-
+        ImageView closeBtn = view.findViewById(R.id.close_btn);
         //Button for closing the bottom sheet. Clears the route through directionsRenderer as well, and changes map padding.
         closeBtn.setOnClickListener(v -> {
             mMapsActivity.removeFragmentFromBottomSheet(this);
             mMapsActivity.getMpDirectionsRenderer().clear();
         });
+    }
 
-        //Next button for going through the legs of the route.
-        nextBtn.setOnClickListener(v -> {
-            mViewPager.setCurrentItem(mViewPager.getCurrentItem() + 1, true);
-        });
+    String getStepName(RouteStep startStep, RouteStep endStep) {
+        double startStepZindex = startStep.getStartLocation().getZIndex();
+        String startStepFloorName = startStep.getStartLocation().getFloorName();
+        String highway = null;
 
-        //Back button for going through the legs of the route.
-        backBtn.setOnClickListener(v -> {
-            mViewPager.setCurrentItem(mViewPager.getCurrentItem() - 1, true);
-        });
+        for (String actionName : getActionNames()) {
+            if (startStep.getHighway().equals(actionName)) {
+                if (actionName.equals(Highway.STEPS)) {
+                    highway = "stairs";
+                }else {
+                    highway = actionName;
+                }
+            }
+        }
 
-        //Describing the distance in meters
-        distanceTxtView.setText("Distance: " + mRoute.getDistance() + " m");
-        //Describing the time it takes for the route in minutes
-        infoTxtView.setText("Time for route: " + TimeUnit.MINUTES.convert(mRoute.getDuration(), TimeUnit.SECONDS) + " minutes");
+        if (highway != null) {
+            return String.format("Take %s to %s %s", highway, "level", endStep.getEndLocation().getFloorName().isEmpty() ? endStep.getEndLocation().getZIndex(): endStep.getEndLocation().getFloorName());
+        }
+
+        if (startStepFloorName.equals(endStep.getEndLocation().getFloorName())) {
+            return "Walk to next step";
+        }
+
+        String endStepFloorName = endStep.getEndLocation().getFloorName();
+
+        if (endStepFloorName.isEmpty()) {
+            return String.format("Level %s to %s", startStepFloorName.isEmpty() ? startStepZindex: startStepFloorName, endStep.getEndPoint().getZIndex());
+        }else {
+            return String.format("Level %s to %s", startStepFloorName.isEmpty() ? startStepZindex: startStepFloorName, endStepFloorName);
+        }
+    }
+
+    ArrayList<String> getActionNames() {
+        ArrayList<String> actionNames = new ArrayList<>();
+        actionNames.add(Highway.ELEVATOR);
+        actionNames.add(Highway.ESCALATOR);
+        actionNames.add(Highway.STEPS);
+        actionNames.add(Highway.TRAVELATOR);
+        actionNames.add(Highway.RAMP);
+        actionNames.add(Highway.WHEELCHAIRLIFT);
+        actionNames.add(Highway.WHEELCHAIRRAMP);
+        actionNames.add(Highway.LADDER);
+        return actionNames;
     }
 
     class RouteCollectionAdapter extends FragmentStateAdapter {
@@ -105,7 +142,25 @@ public class NavigationFragment extends Fragment {
         @NonNull
         @Override
         public Fragment createFragment(int position) {
-            return RouteLegFragment.newInstance(mRoute.getLegs().get(position));
+            if (position == mRoute.getLegs().size() - 1) {
+                return RouteLegFragment.newInstance("Walk to " + mLocation.getName(), (int) mRoute.getLegs().get(position).getDistance(), (int) mRoute.getLegs().get(position).getDuration());
+            }else {
+                RouteLeg leg = mRoute.getLegs().get(position);
+                RouteStep firstStep = leg.getSteps().get(0);
+                RouteStep lastFirstStep = mRoute.getLegs().get(position+1).getSteps().get(0);
+                RouteStep lastStep = mRoute.getLegs().get(position+1).getSteps().get(mRoute.getLegs().get(position+1).getSteps().size()-1);
+
+                Building firstBuilding = MapsIndoors.getBuildings().getBuilding(firstStep.getStartPoint().getLatLng());
+                Building lastBuilding = MapsIndoors.getBuildings().getBuilding(lastStep.getStartPoint().getLatLng());
+
+                if (firstBuilding != null && lastBuilding != null) {
+                    return RouteLegFragment.newInstance(getStepName(lastFirstStep, lastStep), (int) leg.getDistance(), (int) leg.getDuration());
+                }else if (firstBuilding != null) {
+                    return RouteLegFragment.newInstance("Exit: " + firstBuilding.getName(), (int) leg.getDistance(), (int) leg.getDuration());
+                }else {
+                    return RouteLegFragment.newInstance("Enter: " + lastBuilding.getName(), (int) leg.getDistance(), (int) leg.getDuration());
+                }
+            }
         }
 
         @Override

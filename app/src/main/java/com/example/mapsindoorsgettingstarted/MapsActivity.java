@@ -49,6 +49,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
     private SearchFragment mSearchFragment;
     private Fragment mCurrentFragment;
     private BottomSheetBehavior<FrameLayout> mBtmnSheetBehavior;
+    private MPLocation mSelectedLocation = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -227,6 +228,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         mpRoutingProvider.setTravelMode(TravelMode.WALKING);
         //Queries the MPRouting provider for a route with the hardcoded user location and the point from a location.
+        mSelectedLocation = mpLocation;
         mpRoutingProvider.query(mUserLocation, mpLocation.getPoint());
     }
 
@@ -256,7 +258,7 @@ public class MapsActivity extends AppCompatActivity implements OnMapReadyCallbac
         //Set the route on the Directions renderer
         mpDirectionsRenderer.setRoute(route);
         //Create a new instance of the navigation fragment
-        mNavigationFragment = NavigationFragment.newInstance(route, this);
+        mNavigationFragment = NavigationFragment.newInstance(route, this, mSelectedLocation);
         //Add the fragment to the BottomSheet
         addFragmentToBottomSheet(mNavigationFragment);
         //As camera movement is involved run this on the UIThread

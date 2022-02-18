@@ -14,17 +14,24 @@ import android.widget.TextView;
 import com.mapsindoors.mapssdk.RouteLeg;
 import com.mapsindoors.mapssdk.RouteStep;
 
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+
 /**
  * A simple {@link Fragment} subclass.
  * Use the {@link RouteLegFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
 public class RouteLegFragment extends Fragment {
-    private RouteLeg mRouteLeg;
+    private String mStep = null;
+    private int mDuration = 0;
+    private int mDistance = 0;
 
-    public static RouteLegFragment newInstance(RouteLeg routeLeg) {
+    public static RouteLegFragment newInstance(String step, int distance, int duration) {
         RouteLegFragment fragment = new RouteLegFragment();
-        fragment.mRouteLeg = routeLeg;
+        fragment.mStep = step;
+        fragment.mDistance = distance;
+        fragment.mDuration = duration;
         return fragment;
     }
 
@@ -43,14 +50,22 @@ public class RouteLegFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        //Assigning views
-        TextView stepTxtView = view.findViewById(R.id.steps_text_view);
-        String stepsString = "";
-        //A loop to write what to do for each step of the leg.
-        for (int i = 0; i < mRouteLeg.getSteps().size(); i++) {
-            RouteStep routeStep = mRouteLeg.getSteps().get(i);
-            stepsString += "Step " + (i + 1) + " " + routeStep.getManeuver() + "\n";
+        TextView stepTextView = view.findViewById(R.id.stepTextView);
+        TextView distanceTextView = view.findViewById(R.id.distanceTextView);
+        TextView durationTextView = view.findViewById(R.id.durationTextView);
+
+        stepTextView.setText(mStep);
+
+        if (Locale.getDefault().getCountry().equals("US")) {
+            distanceTextView.setText((int) Math.round(mDistance * 3.281) + " feet");
+        }else {
+            distanceTextView.setText(mDistance + " m");
         }
-        stepTxtView.setText(stepsString);
+
+        if (mDuration < 60) {
+            durationTextView.setText(mDuration + " sec");
+        }else {
+            durationTextView.setText(TimeUnit.MINUTES.convert(new Long(mDuration), TimeUnit.SECONDS) + " min");
+        }
     }
 }
